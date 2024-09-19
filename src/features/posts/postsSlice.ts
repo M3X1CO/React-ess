@@ -1,4 +1,6 @@
+import type { RootState } from '@/app/store'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { nanoid } from '@reduxjs/toolkit'
 
 // Define a TS type for the data we'll be using
 export interface Post {
@@ -17,15 +19,34 @@ const initialState: Post[] = [
 const postsSlice = createSlice({
   name: 'posts',
   initialState,
-  reducers: { 
-    postAdded(state, action: PayloadAction<Post>) {
-      state.push(action.payload)
+  reducers: {
+    postAdded: {
+      reducer(state, action: PayloadAction<Post>) {
+        state.push(action.payload)
+      },
+      prepare(title: string, content: string) {
+        return {
+          payload: { id: nanoid(), title, content }
+        }
+      }
+    },
+    postUpdated(state, action: PayloadAction<Post>) {
+      const { id, title, content } = action.payload
+      const existingPost = state.find(post => post.id === id)
+      if(existingPost) {
+        existingPost.title = title
+        existingPost.content = content
+      }
     }
   }
 })
 
 // Export the auto-generated action creator with the same name
-export const { postAdded } = postsSlice.actions
+export const { postAdded, postUpdated } = postsSlice.actions
 
 // Export the generated reducer function
 export default postsSlice.reducer
+
+export const selectAllPosts = (state: RootState) => state.posts
+export const selectPostById = (state: RootState, postId: string) =>
+  state.posts.find(post => post.id === postId)
